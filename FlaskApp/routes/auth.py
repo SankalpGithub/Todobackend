@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request
 from config.mongodb_con import con
+from FlaskApp.utils import email_sender, otp_generator
 
 
 #get collection from mongodb
@@ -38,10 +39,17 @@ def register():
                 return resp
             else:
                 count = MyCol.count_documents({})
+                otp = otp_generator.generate_otp()
                 #verify email via otp
-                MyCol.insert_one({'_id': count, 'name': name, 'email': email, 'password': password})
-                resp = jsonify({'message': 'user register successfully', 'status': 200})
-                return resp
+                email_send = email_sender.email_sender(email,otp)
+                if email_send: 
+                    resp = jsonify({'message': 'otp sent successfully', 'status': 200})
+                    return resp
+                else:
+                    resp = jsonify({'message': 'otp not sent successfully', 'status': 400})
+                    return resp
+
+                
             #insert user data in db
 
 
