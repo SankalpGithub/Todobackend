@@ -1,0 +1,2 @@
+missing values = 400 (bad request code)
+duplicate entry = 409 (conflict)
