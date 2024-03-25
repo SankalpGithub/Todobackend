@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 from config.mongodb_con import con
-from FlaskApp.utils import email_sender, otp_generator
+from FlaskApp.utils import email_sender, otp_generator, password_hash
+from datetime import datetime, timedelta
 
 
 #get collection from mongodb
@@ -35,23 +36,32 @@ def register():
             query = {'email': email}
             existing_doc = MyCol.find_one(query)
             if existing_doc:
-                resp = jsonify({'message': 'email id already existing', 'status': 409})
-                return resp
+                if existing_doc['verify']:
+                    resp = jsonify({'message': 'email id already existing', 'status': 409})
+                    return resp
+                else:
+                    #resend otp
+                    pass
             else:
                 count = MyCol.count_documents({})
-                otp = otp_generator.generate_otp()
+
+                #hash password
+                hash_password = password_hash.hash_password(password)
+
                 #verify email via otp
+                otp = otp_generator.generate_otp()
                 email_send = email_sender.email_sender(email,otp)
+
                 if email_send: 
+                    otp_expiry = datetime.now() + timedelta(minutes=2)
                     resp = jsonify({'message': 'otp sent successfully', 'status': 200})
+
+                    #insert user data in db
+                    MyCol.insert_one({'_id': count, 'name': name, 'email': email, 'password': hash_password, 'otp_list': {'otp': otp, 'expiry': otp_expiry}, 'verify': False})
                     return resp
                 else:
                     resp = jsonify({'message': 'otp not sent successfully', 'status': 400})
                     return resp
-
-                
-            #insert user data in db
-
 
     except Exception as e:
         resp = jsonify(f"Exception: {e}")
