@@ -26,6 +26,7 @@ def register():
             message = f"The following fields are missing or empty: {', '.join(missing_values)}"
             resp = jsonify({'message': message, 'status': 400})
             return resp
+        
         else:
 
             name = _json.get('name')
@@ -41,7 +42,8 @@ def register():
                     return resp
                 else:
                     #resend otp
-                    pass
+                    resp = jsonify({'message':'verify your otp', 'status': 200})
+                    return resp
             else:
                 count = MyCol.count_documents({})
 
@@ -66,3 +68,9 @@ def register():
     except Exception as e:
         resp = jsonify(f"Exception: {e}")
         return resp
+    
+def resend_otp(id):
+    otp = otp_generator.generate_otp()
+    
+
+                
